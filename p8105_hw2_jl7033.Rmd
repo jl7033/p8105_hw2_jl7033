@@ -10,3 +10,68 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
+## Problem 1
+
+```{r}
+
+subway_df <- read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
+  janitor::clean_names()  %>%
+  select(division:entry, vending, ada) %>%
+  mutate(
+    entry = case_match(
+      entry,
+      "YES" ~ TRUE,
+      "NO" ~ FALSE
+    )
+  )
+
+```
+##### Part 1: Variables, Data Cleaning, and Rows/Columns
+
+The data contains the name of the subway division, the subway line (the major road the station is located at), the station name, the station's latitude and longitude in degrees (positive means north/east, negative means south/west), each of the routes the station serves (up to 11; larger stations, like those at 34 St/Penn Station and 42 St, have larger numbers of routes served), the type of entrance (stair/door/elevator/escalator/easement), whether the station has a vending machine, and whether the station is ADA compliant.
+
+So far, I've used the `janitor` package to convert each of the column names to all-lowercase, selected the 20 columns that the problem asked for using the `select()` function, and converted the `entry` column into a logical variable using `case_match()` within the `mutate()` function. 
+
+The cleaned-up dataset has a total of `r nrow(subway_data)` rows and `r ncol(subway_data)` columns.
+
+##### Part 2: Answering Questions About the Dataset
+
+```{r}
+
+subway_df %>%
+  distinct(station_name) %>%
+  nrow()
+
+```
+
+Using the `distinct()` function, I found that there are 356 unique station names. I used `distinct()` to create a new $n \times 1$ data frame, where $n$ is the number of distinct subway stations. Then, I simply took the number of rows of the data frame to find the number of distinct stations.
+
+```{r}
+
+subway_df %>%
+  select(ada) %>%
+  sum()
+
+```
+
+Using the `select` and `sum` functions, I found that there are 468 ADA-compliant stations. Taking advantage of the fact that R counts `TRUE` values as 1 and `FALSE` values as 0 within a logical variable, I simply took the sum of the `ada` column to find the number of stations that are ADA compliant.
+
+```{r}
+
+subway_df %>%
+  filter(vending == "NO") %>%
+  pull(entry) %>%
+  mean()
+
+```
+
+I found that the proportion of station entrances/exits without vending that allow entrance is about 0.377, or 37.7\%. To do so, I used `filter()` to select only the rows without vending, used `pull()` to get the `entry` column as a logical vector, and then took the mean of the `entry` vector to get the proportion of `TRUE` values.
+
+##### Part 3: The A Train
+
+```{r}
+
+subway_df
+
+```
+
