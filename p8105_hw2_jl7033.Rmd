@@ -32,19 +32,19 @@ The data contains the name of the subway division, the subway line (the major ro
 
 So far, I've used the `janitor` package to convert each of the column names to all-lowercase, selected the 20 columns that the problem asked for using the `select()` function, and converted the `entry` column into a logical variable using `case_match()` within the `mutate()` function. 
 
-The cleaned-up dataset has a total of `r nrow(subway_data)` rows and `r ncol(subway_data)` columns.
+The cleaned-up dataset has a total of `r nrow(subway_df)` rows and `r ncol(subway_df)` columns.
 
 ##### Part 2: Answering Questions About the Dataset
 
 ```{r}
 
 subway_df %>%
-  distinct(station_name) %>%
+  distinct(line, station_name) %>%
   nrow()
 
 ```
 
-Using the `distinct()` function, I found that there are 356 unique station names. I used `distinct()` to create a new $n \times 1$ data frame, where $n$ is the number of distinct subway stations. Then, I simply took the number of rows of the data frame to find the number of distinct stations.
+Using the `distinct()` function, I found that there are 465 unique station names. I used `distinct()` to create a new $n \times 1$ data frame, where $n$ is the number of distinct subway stations. Then, I simply took the number of rows of the data frame to find the number of distinct stations.
 
 ```{r}
 
@@ -71,7 +71,48 @@ I found that the proportion of station entrances/exits without vending that allo
 
 ```{r}
 
-subway_df
+subway_tidy_df =
+  subway_df %>%
+  mutate(route8 = as.character(route8),
+         route9 = as.character(route9),
+         route10 = as.character(route10),
+         route11 = as.character(route11)
+         ) %>%
+  pivot_longer(
+    route1:route11,
+    names_to = "route_number",
+    values_to = "route",
+    names_prefix = "route"
+  ) %>%
+  filter(!is.na(route))
 
 ```
+
+First, I noticed that since some subway routes in New York are represented by numbers (for example, the 1 train), I converted the `route8` through `route11` columns to character in order to maintain consistency (in addition, the `pivot_longer()` function doesn't work if all of the columns selected aren't of the same variable type). Then, I used `pivot_longer()` to separate `route_number`, which gives the index of the route, and `route`, which specifies the precise route of the train. Finally, I used `filter` to select only the rows for which an actual route exists.
+
+```{r}
+
+subway_tidy_df %>%
+  distinct(line, station_name, route) %>%
+  filter(route == "A") %>%
+  nrow()
+  
+```
+
+I found that there are 60 distinct stations that serve the A train. First, I used `distinct()` to select all unique combinations of line, station name, and route. Then, I filtered the data frame to include only stations which served the A train, and then took the number of rows of the data frame.
+
+```{r}
+
+subway_tidy_df %>%
+  distinct(line, station_name, route, ada) %>%
+  filter(route == "A" & ada == TRUE) %>%
+  nrow()
+
+```
+
+Of the 60 distinct stations that serve the A train, 17 of them are ADA compliant. I used a similar process to the one I used in the previous question, except this time, I included `ada` in the `distinct` function and filtered the data frame by both `route` and `ada`.
+
+## Problem 2
+
+
 
