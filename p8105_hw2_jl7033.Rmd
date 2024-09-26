@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(readxl)
 ```
 
 ## Problem 1
@@ -113,6 +114,50 @@ subway_tidy_df %>%
 Of the 60 distinct stations that serve the A train, 17 of them are ADA compliant. I used a similar process to the one I used in the previous question, except this time, I included `ada` in the `distinct` function and filtered the data frame by both `route` and `ada`.
 
 ## Problem 2
+
+##### Upload and Clean Data
+
+```{r}
+
+mr_trash_wheel_df = 
+  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+             sheet = "Mr. Trash Wheel",
+             skip = 1) %>%
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%
+  select(dumpster:homes_powered) %>%
+  mutate(
+    sports_balls = as.integer(sports_balls)
+    ) %>%
+  add_column(wheel = "Mr. Trash Wheel",
+             .before = "dumpster") 
+
+prof_trash_wheel_df = 
+  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+             sheet = "Professor Trash Wheel",
+             skip = 1) %>%
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%
+  add_column(sports_balls = NA, 
+             .before = "homes_powered") %>%
+  add_column(wheel = "Professor Trash Wheel",
+             .before = "dumpster") %>%
+  mutate(
+    year = as.character(year)
+  )
+
+total_trash_wheel_df = bind_rows(mr_trash_wheel_df, prof_trash_wheel_df)
+
+```
+To clean the data, I used `janitor::clean_names()` to convert all variable names to lowercase, used `filter()` to omit the last row of both data frames, which tracks the totals and does not represent single-dumpster data, added the `wheel` variable to distinguish between Mr. Trash Wheel and Professor Trash Wheel, added a `sports_balls` column to the Professor Trash Wheel data frame and converted the `year` column to a character variable to make the two data frames compatible for binding, and then binded the two data frames together using `bind_rows()`.
+
+The Mr. Trash Wheel data frame has `r nrow(mr_trash_wheel_df)` rows, while the Professor Trash Wheel data frame has `r nrow(prof_trash_wheel_df)` rows, for a total of `r (nrow(mr_trash_wheel_df) + nrow(prof_trash_wheel_df))` unique dumpsters.
+
+```{r}
+
+nrow(mr_trash_wheel_df)
+
+```
 
 
 
