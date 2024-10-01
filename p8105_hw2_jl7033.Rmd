@@ -146,18 +146,106 @@ prof_trash_wheel_df =
     year = as.character(year)
   )
 
-total_trash_wheel_df = bind_rows(mr_trash_wheel_df, prof_trash_wheel_df)
+gwynnda_trash_wheel_df = 
+  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+             sheet = "Gwynnda Trash Wheel",
+             skip = 1) %>%
+  janitor::clean_names() %>%
+  filter(!is.na(dumpster)) %>%
+  add_column(sports_balls = NA, 
+             .before = "homes_powered") %>%
+  add_column(wheel = "Gwynnda Trash Wheel",
+             .before = "dumpster") %>%
+  mutate(
+    year = as.character(year)
+  )
+
+
+total_trash_wheel_df = bind_rows(mr_trash_wheel_df, 
+                                 prof_trash_wheel_df,
+                                 gwynnda_trash_wheel_df)
 
 ```
-To clean the data, I used `janitor::clean_names()` to convert all variable names to lowercase, used `filter()` to omit the last row of both data frames, which tracks the totals and does not represent single-dumpster data, added the `wheel` variable to distinguish between Mr. Trash Wheel and Professor Trash Wheel, added a `sports_balls` column to the Professor Trash Wheel data frame and converted the `year` column to a character variable to make the two data frames compatible for binding, and then binded the two data frames together using `bind_rows()`.
 
-The Mr. Trash Wheel data frame has `r nrow(mr_trash_wheel_df)` rows, while the Professor Trash Wheel data frame has `r nrow(prof_trash_wheel_df)` rows, for a total of `r (nrow(mr_trash_wheel_df) + nrow(prof_trash_wheel_df))` unique dumpsters.
+To clean the data, I used `janitor::clean_names()` to convert all variable names to lowercase, used `filter()` to omit the last row of both data frames, which tracks the totals and does not represent single-dumpster data, added the `wheel` variable to distinguish between Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel, added a `sports_balls` column to the Professor Trash Wheel and Gwynnda Trash Wheel data frames and converted the `year` column to a character variable to make the two data frames compatible for binding, and then binded the two data frames together using `bind_rows()`.
+
+The Mr. Trash Wheel data frame has `r nrow(mr_trash_wheel_df)` rows, the Professor Trash Wheel data frame has `r nrow(prof_trash_wheel_df)` rows, and the Gwynnda Trash Wheel has `r nrow(gwynnda_trash_wheel_df)` rows, for a total of `r (nrow(mr_trash_wheel_df) + nrow(prof_trash_wheel_df) + nrow(gwynnda_trash_wheel_df))` unique dumpsters.
+
+#### Find Total Trash Weight Collected by Prof. Trash Wheel
 
 ```{r}
 
-nrow(mr_trash_wheel_df)
+prof_trash_wheel_df %>%
+  pull(weight_tons) %>%
+  sum()
 
 ```
 
+Professor Trash Wheel collected a total of 216.26 tons of trash from 2017 to 2023.
+
+#### Find Total Number of Cigarette Butts Collected by Gwynnda in 2022
+
+```{r}
+
+gwynnda_trash_wheel_df %>%
+  filter(year == "2022") %>%
+  pull(cigarette_butts) %>%
+  sum()
+
+```
+
+Gwynnda Trash Wheel collected a total of 205,410 cigarette butts in 2022.
+
+## Problem 3: Great British Bake-Off
+
+#### Importing the Data
+
+```{r}
+
+bakers_df <- read_csv("data/gbb_datasets/bakers.csv") %>%
+  janitor::clean_names() 
+bakes_df <- read_csv("data/gbb_datasets/bakes.csv") %>%
+  janitor::clean_names()
+viewers_df <- read_csv("data/gbb_datasets/viewers.csv") %>%
+  janitor::clean_names()
+results_df <- read_csv("data/gbb_datasets/results.csv", skip = 2) %>%
+  janitor::clean_names()
+  
+
+```
+
+#### Create a merged dataframe with all relevant GBB data
+
+```{r}
+
+gbb_df = 
+  bakers_df %>% 
+    separate_wider_delim(baker_name, " ", names = c("baker", "last_name")) %>%
+    left_join(results_df, by = c("baker", "series")) %>%
+    left_join(bakes_df, by = c("baker", "series", "episode")) %>%
+    filter(!is.na(result)) %>%
+    write_csv("data/gbb.csv")
+
+```
+
+Before combining the datasets, I separated the `baker_name` column of the `bakers` data frame into the baker's first and last names for the sake of merging. Then, I used the `left_join()` function to merge the `bakers`, `results`, and `bakes` datasets. Finally, I filtered out the rows for which there was no result, as the baker in question had already been eliminated by that point. For example, Ali Imdad was eliminated in episode 4 of his season, so I filtered out all of the rows for Ali Imdad from episode 5 on. 
+
+One question I have: why is there no data for `bakes` after series 8? I decided to keep the data for series 9 and series 10 because it had important information about result, but the dataset would be more complete if data were available for `bakes` during that time period.
 
 
+
+
+
+
+```{r}
+
+viewers_df %>%
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series", 
+    values_to = "viewers",
+    names_prefix = "series_"
+  ) %>%
+  select(series, episode, everything())
+
+```
