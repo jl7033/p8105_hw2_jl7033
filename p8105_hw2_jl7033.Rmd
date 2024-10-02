@@ -175,7 +175,8 @@ The Mr. Trash Wheel data frame has `r nrow(mr_trash_wheel_df)` rows, the Profess
 
 ```{r}
 
-prof_trash_wheel_df %>%
+total_trash_wheel_df %>%
+  filter(wheel == "Professor Trash Wheel") %>%
   pull(weight_tons) %>%
   sum()
 
@@ -187,8 +188,8 @@ Professor Trash Wheel collected a total of 246.74 tons of trash from 2017 to 202
 
 ```{r}
 
-gwynnda_trash_wheel_df %>%
-  filter(year == "2022") %>%
+total_trash_wheel_df %>%
+  filter(wheel == "Gwynnda Trash Wheel", year == "2022") %>%
   pull(cigarette_butts) %>%
   sum()
 
@@ -200,7 +201,7 @@ Gwynnda Trash Wheel collected a total of 205,410 cigarette butts in 2022.
 
 #### Importing the Data
 
-```{r}
+```{r, message = FALSE}
 
 bakers_df <- read_csv("data/gbb_datasets/bakers.csv") %>%
   janitor::clean_names() 
@@ -245,11 +246,11 @@ star_baker_df =
   arrange(series, episode) %>%
   view()
 
-head(star_baker_df)
+head(star_baker_df, 10)
 
 ```
 
-In order to make the star baker table more legible, I arranged the entries by series and then by episode. The mean age of the star bakers from series 5 through 10 was `r round(mean(star_baker_df$baker_age), 1)`, slightly lower than the mean age for all bakers, which was `r round(mean(gbb_df$baker_age), 1)`.
+In order to make the star baker table more legible, I arranged the entries by series and then by episode. The mean age of the star bakers from series 5 through 10 was `r round(mean(star_baker_df$baker_age), 1)`, slightly lower than the mean age for all bakers, which was `r round(mean(gbb_df$baker_age), 1)`. There doesn't seem to be a clear pattern in terms of occupation (there's a wide variety, from builders to educators to marketers and more) and hometown. Being named Star Baker most frequently wasn't perfectly correlated with winning; Richard Burr earned the Star Baker title four times in Series 5, and yet still finished as the runner-up, even though the winner, Nancy Birtwhistle, was only awarded the title in Week 1. Ian Cumming won the title three times in a row early in Series 6 but finished with the same result as Burr (though the winner, Nadiya Hussain, also earned the Star Baker title three non-consecutive times later in the series).
 
 #### Organizing the Viewers Dataset
 
