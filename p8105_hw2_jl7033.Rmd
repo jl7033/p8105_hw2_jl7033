@@ -120,7 +120,7 @@ Of the 60 distinct stations that serve the A train, 17 of them are ADA compliant
 ```{r}
 
 mr_trash_wheel_df = 
-  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+  read_excel("data/202409 Trash Wheel Collection Data.xlsx", 
              sheet = "Mr. Trash Wheel",
              skip = 1) %>%
   janitor::clean_names() %>%
@@ -133,11 +133,11 @@ mr_trash_wheel_df =
              .before = "dumpster") 
 
 prof_trash_wheel_df = 
-  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+  read_excel("data/202409 Trash Wheel Collection Data.xlsx", 
              sheet = "Professor Trash Wheel",
              skip = 1) %>%
   janitor::clean_names() %>%
-  filter(!is.na(dumpster)) %>%
+  filter(!is.na(dumpster), !is.na(year)) %>%
   add_column(sports_balls = NA, 
              .before = "homes_powered") %>%
   add_column(wheel = "Professor Trash Wheel",
@@ -147,7 +147,7 @@ prof_trash_wheel_df =
   )
 
 gwynnda_trash_wheel_df = 
-  read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+  read_excel("data/202409 Trash Wheel Collection Data.xlsx", 
              sheet = "Gwynnda Trash Wheel",
              skip = 1) %>%
   janitor::clean_names() %>%
@@ -181,7 +181,7 @@ prof_trash_wheel_df %>%
 
 ```
 
-Professor Trash Wheel collected a total of 216.26 tons of trash from 2017 to 2023.
+Professor Trash Wheel collected a total of 246.74 tons of trash from 2017 to 2023.
 
 #### Find Total Number of Cigarette Butts Collected by Gwynnda in 2022
 
@@ -224,7 +224,10 @@ gbb_df =
     left_join(results_df, by = c("baker", "series")) %>%
     left_join(bakes_df, by = c("baker", "series", "episode")) %>%
     filter(!is.na(result)) %>%
+    select(baker, last_name, series, episode, technical, result, everything()) %>%
     write_csv("data/gbb.csv")
+
+view(gbb_df)
 
 ```
 
@@ -232,20 +235,58 @@ Before combining the datasets, I separated the `baker_name` column of the `baker
 
 One question I have: why is there no data for `bakes` after series 8? I decided to keep the data for series 9 and series 10 because it had important information about result, but the dataset would be more complete if data were available for `bakes` during that time period.
 
-
-
-
-
+#### Star Baker Table
 
 ```{r}
 
-viewers_df %>%
+star_baker_df = 
+  gbb_df %>%
+  filter(result == "STAR BAKER", series >= 5) %>%
+  arrange(series, episode) %>%
+  view()
+
+head(star_baker_df)
+
+```
+
+In order to make the star baker table more legible, I arranged the entries by series and then by episode. The mean age of the star bakers from series 5 through 10 was `r round(mean(star_baker_df$baker_age), 1)`, slightly lower than the mean age for all bakers, which was `r round(mean(gbb_df$baker_age), 1)`.
+
+#### Organizing the Viewers Dataset
+
+```{r}
+
+viewers_df_tidy = viewers_df %>%
   pivot_longer(
     cols = series_1:series_10,
     names_to = "series", 
     values_to = "viewers",
     names_prefix = "series_"
   ) %>%
-  select(series, episode, everything())
+  mutate(series = as.numeric(series)) %>%
+  filter(!is.na(viewers)) %>%
+  select(series, episode, everything()) %>%
+  arrange(series, episode)
+
+head(viewers_df_tidy, 10)
 
 ```
+
+To tidy up the dataset, I converted `series` into a numeric variable so that I could later arrange the data. I then filtered out episodes with no viewers, since those episodes do not exist. For example, I removed series 1, episodes 7 thorugh 10, because while most seasons of the Great British Bake-Off have 10 episodes, series 1 had only 6. Finally, I reorganized the columns using `select()` so that `series` would come first and be followed by `episode` and used `arrange()` to organize the table by series and then by episode.
+
+#### Finding Average Viewership In Series 1 and Series 5
+
+```{r}
+
+viewers_df_tidy %>%
+  filter(series == 1) %>%
+  pull(viewers) %>%
+  mean()
+
+viewers_df_tidy %>%
+  filter(series == 5) %>%
+  pull(viewers) %>%
+  mean()
+
+```
+
+The average viewership in series 1 was about 2.77 million, while the average viewership in series 5 was about 10.04 million, almost four times the average viewership of series 1.
